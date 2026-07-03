@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Teste de integração ERP Ágil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --azul: #2563EB;
+    --azul-escuro: #1D4ED8;
+    --indigo: #6366F1;
+    --verde: #16A34A;
+    --green: #16A34A;              /* alias usado pelos formulários */
+    --vermelho: #DC2626;
+    --slate-900: #0F172A;
+    --slate-700: #334155;
+    --slate-500: #64748B;
+    --graphite-light: #64748B;     /* alias usado pelos formulários */
+    --slate-300: #CBD5E1;
+    --slate-200: #E2E8F0;
+    --slate-100: #F1F5F9;
+    --fundo: #F8FAFC;
+    --branco: #FFFFFF;
+    --raio: 10px;
+    --fonte-display: 'Space Grotesk', sans-serif;
+    --fonte-corpo: 'Inter', sans-serif;
+    --fonte-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--fonte-corpo);
+    background: var(--fundo);
+    color: var(--slate-900);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ---------- Cabeçalho ---------- */
+  header {
+    background: var(--slate-900);
+    color: var(--branco);
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .marca { display: flex; align-items: baseline; gap: 12px; }
+  .marca h1 {
+    font-family: var(--fonte-display);
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+  .marca h1 .agil { color: var(--indigo); }
+  .marca .sub { font-size: 0.85rem; color: var(--slate-300); }
+  .badge-modo {
+    font-family: var(--fonte-mono);
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--slate-700);
+    color: var(--slate-300);
+  }
+  .badge-modo.simulacao { border-color: var(--indigo); color: #A5B4FC; }
+  .badge-modo.real { border-color: var(--verde); color: #4ADE80; }
+
+  /* ---------- Layout ---------- */
+  main {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+    gap: 28px;
+    align-items: start;
+  }
+  @media (max-width: 980px) {
+    main { grid-template-columns: 1fr; }
+    .console-wrap { position: static !important; }
+  }
+
+  .formularios { display: flex; flex-direction: column; gap: 24px; }
+
+  .card {
+    background: var(--branco);
+    border: 1px solid var(--slate-200);
+    border-radius: var(--raio);
+    padding: 24px;
+  }
+  .card > h2 {
+    font-family: var(--fonte-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .card .desc {
+    font-size: 0.85rem;
+    color: var(--slate-500);
+    margin-bottom: 18px;
+  }
+  .card .rota {
+    font-family: var(--fonte-mono);
+    font-size: 0.72rem;
+    color: var(--azul);
+    background: var(--slate-100);
+    padding: 2px 8px;
+    border-radius: 5px;
+  }
+  .card h4 {
+    font-family: var(--fonte-display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--slate-700);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--slate-200);
+  }
+
+  /* ---------- Campos (classes usadas pelos formulários) ---------- */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 12px;
+  }
+  @media (max-width: 560px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-group { display: flex; flex-direction: column; }
+  .form-group.full-width, .full-width { grid-column: 1 / -1; }
+
+  label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--slate-700);
+    margin-bottom: 5px;
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-family: var(--fonte-corpo);
+    font-size: 0.9rem;
+    border: 1px solid var(--slate-300);
+    border-radius: 7px;
+    background: var(--branco);
+    color: var(--slate-900);
+  }
+  textarea { min-height: 90px; resize: vertical; }
+  input:focus, select:focus, textarea:focus, button:focus-visible {
+    outline: 2px solid var(--azul);
+    outline-offset: 1px;
+    border-color: var(--azul);
+  }
+
+  .checkbox-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+    padding-top: 4px;
+  }
+  @media (max-width: 560px) { .checkbox-group { grid-template-columns: 1fr; } }
+  .checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: var(--slate-700);
+    cursor: pointer;
+    margin: 0;
+  }
+  .checkbox-label input { width: auto; margin-top: 3px; }
+
+  .cep-status.ok { color: var(--verde); }
+  .cep-status.erro { color: var(--vermelho); }
+
+  /* ---------- Botões e status ---------- */
+  .form-submit {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .btn, button[type="submit"] {
+    font-family: var(--fonte-corpo);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--branco);
+    background: var(--azul);
+    border: none;
+    border-radius: 7px;
+    padding: 11px 22px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .btn:hover, button[type="submit"]:hover { background: var(--azul-escuro); }
+  button[type="submit"]:disabled { background: var(--slate-300); cursor: wait; }
+
+  .status { font-size: 0.82rem; font-weight: 500; }
+  .status.ok { color: var(--verde); }
+  .status.erro { color: var(--vermelho); }
+
+  .form-note {
+    margin-top: 12px;
+    font-size: 0.8rem;
+    color: var(--slate-500);
+  }
+
+  /* ---------- Console de integração ---------- */
+  .console-wrap { position: sticky; top: 24px; }
+  .console {
+    background: var(--slate-900);
+    border-radius: var(--raio);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 48px);
+  }
+  .console-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--slate-700);
+  }
+  .console-topo h3 {
+    font-family: var(--fonte-display);
+    font-size: 0.9rem;
+    color: var(--branco);
+    font-weight: 500;
+  }
+  .console-topo button {
+    font-family: var(--fonte-mono);
+    font-size: 0.7rem;
+    color: var(--slate-300);
+    background: transparent;
+    border: 1px solid var(--slate-700);
+    border-radius: 5px;
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+  .console-topo button:hover { color: var(--branco); border-color: var(--slate-500); }
+  .console-log {
+    font-family: var(--fonte-mono);
+    font-size: 0.72rem;
+    color: var(--slate-300);
+    padding: 16px 18px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 220px;
+  }
+  .console-log .vazio { color: var(--slate-500); }
+  .log-item { margin-bottom: 16px; }
+  .log-item .hora { color: var(--slate-500); }
+  .log-item .tag { font-weight: 500; }
+  .log-item .tag.req { color: #93C5FD; }
+  .log-item .tag.res-ok { color: #4ADE80; }
+  .log-item .tag.res-erro { color: #F87171; }
+  .log-item pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="marca">
+    <h1>ERP<span class="agil">Ágil</span></h1>
+    <span class="sub">Teste de integração — SOW Books</span>
+  </div>
+  <span class="badge-modo" id="badgeModo">aguardando primeiro envio…</span>
+</header>
+
+<main>
+  <section class="formularios" aria-label="Formulários de teste">
+
+    <!-- =========================================================
+         FORM 1 — Cliente solicita visita do consultor
+         ========================================================= -->
+    <div class="card">
+      <h2>1 · Solicitação de visita <span class="rota">tipo: visita</span></h2>
+      <p class="desc">Cliente solicita a visita de um consultor.</p>
+
+      <form data-tipo="visita" data-action="https://formsubmit.co/ajax/contato@sowbooks.com">
+        <input type="hidden" name="_subject" value="Nova solicitação de visita — SOW Books">
+        <input type="hidden" name="_template" value="table">
+        <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="nome">Nome completo</label>
+            <input type="text" id="nome" name="nome" required>
+          </div>
+          <div class="form-group">
+            <label for="whatsapp">WhatsApp</label>
+            <input type="tel" id="whatsapp" name="whatsapp" placeholder="(00) 00000-0000" required>
+          </div>
+          <div class="form-group">
+            <label for="v-cep">CEP</label>
+            <input type="text" id="v-cep" name="cep" placeholder="00000-000" maxlength="9" class="cep-input" required>
+            <small class="cep-status" style="margin-top:4px; font-size:0.8rem;"></small>
+          </div>
+          <div class="form-group">
+            <label for="v-rua">Rua</label>
+            <input type="text" id="v-rua" name="rua" class="cep-rua" required>
+          </div>
+          <div class="form-group">
+            <label for="v-numero">Número</label>
+            <input type="text" id="v-numero" name="numero" class="cep-numero" placeholder="Nº" required>
+          </div>
+          <div class="form-group">
+            <label for="v-complemento">Complemento <small style="font-weight:400;">(opcional)</small></label>
+            <input type="text" id="v-complemento" name="complemento" placeholder="Apto, bloco...">
+          </div>
+          <div class="form-group">
+            <label for="v-bairro">Bairro</label>
+            <input type="text" id="v-bairro" name="bairro" class="cep-bairro" required>
+          </div>
+          <div class="form-group">
+            <label for="v-cidade">Cidade</label>
+            <input type="text" id="v-cidade" name="cidade" class="cep-cidade" required>
+          </div>
+          <div class="form-group">
+            <label for="v-estado">Estado</label>
+            <input type="text" id="v-estado" name="estado" class="cep-estado" required>
+          </div>
+          <div class="form-group">
+            <label for="horario">Melhor horário</label>
+            <select id="horario" name="horario" required>
+              <option value="">Selecione</option>
+              <option value="manha">Manhã</option>
+              <option value="tarde">Tarde</option>
+              <option value="noite">Noite</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-submit">
+          <button type="submit" class="btn btn-primary">Quero receber um consultor</button>
+          <span class="status" role="status"></span>
+        </div>
+        <p class="form-note">Sem compromisso. Um consultor da sua região entrará em contato para agendar a visita.</p>
+      </form>
+    </div>
+
+    <!-- =========================================================
+         FORM 2 — Empresa solicita uma visita
+         ========================================================= -->
+    <div class="card">
+      <h2>2 · Solicitação corporativa <span class="rota">tipo: corporativo</span></h2>
+      <p class="desc">Empresa solicita proposta/visita corporativa.</p>
+
+      <form data-tipo="corporativo" data-action="https://formsubmit.co/ajax/contato@sowbooks.com">
+        <input type="hidden" name="_subject" value="Nova solicitação corporativa — SOW Books">
+        <input type="hidden" name="_template" value="table">
+        <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="resp-nome">Nome do responsável</label>
+            <input type="text" id="resp-nome" name="responsavel" required>
+          </div>
+          <div class="form-group">
+            <label for="resp-cargo">Cargo</label>
+            <input type="text" id="resp-cargo" name="cargo" required>
+          </div>
+          <div class="form-group">
+            <label for="empresa">Empresa</label>
+            <input type="text" id="empresa" name="empresa" required>
+          </div>
+          <div class="form-group">
+            <label for="email-corp">E-mail corporativo</label>
+            <input type="email" id="email-corp" name="email" required>
+          </div>
+          <div class="form-group">
+            <label for="whatsapp-corp">WhatsApp</label>
+            <input type="tel" id="whatsapp-corp" name="whatsapp" placeholder="(00) 00000-0000" required>
+          </div>
+          <div class="form-group">
+            <label for="cidade-corp">Cidade / Estado</label>
+            <input type="text" id="cidade-corp" name="cidade" required>
+          </div>
+          <div class="form-group full-width">
+            <label for="colaboradores">Quantidade de colaboradores</label>
+            <select id="colaboradores" name="colaboradores" required>
+              <option value="">Selecione</option>
+              <option value="ate-20">Até 20</option>
+              <option value="21-50">21 a 50</option>
+              <option value="51-100">51 a 100</option>
+              <option value="101-300">101 a 300</option>
+              <option value="300+">Mais de 300</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label for="motivacao-corp">O que motivou o interesse? (opcional)</label>
+            <textarea id="motivacao-corp" name="motivacao"></textarea>
+          </div>
+        </div>
+        <div class="form-submit">
+          <button type="submit" class="btn btn-primary">Solicitar proposta corporativa</button>
+          <span class="status" role="status"></span>
+        </div>
+        <p class="form-note">Nossa equipe entrará em contato em até 48 horas com uma proposta personalizada.</p>
+      </form>
+    </div>
+
+    <!-- =========================================================
+         FORM 3 — Novo consultor deseja ser certificado
+         ========================================================= -->
+    <div class="card">
+      <h2>3 · Candidatura de consultor <span class="rota">tipo: consultor</span></h2>
+      <p class="desc">Novo consultor deseja ser certificado para vender.</p>
+
+      <form data-tipo="consultor" data-action="https://formsubmit.co/ajax/admin@sowbooks.com">
+        <input type="hidden" name="_subject" value="Nova candidatura de consultor — SOW Books">
+        <input type="hidden" name="_template" value="table">
+        <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+
+        <h4 style="margin-bottom:4px;">Dados pessoais</h4>
+        <div class="form-grid" style="margin-bottom:32px;">
+          <div class="form-group">
+            <label for="c-nome">Nome completo</label>
+            <input type="text" id="c-nome" name="nome" required>
+          </div>
+          <div class="form-group">
+            <label for="c-email">E-mail</label>
+            <input type="email" id="c-email" name="email" required>
+          </div>
+          <div class="form-group">
+            <label for="c-whatsapp">WhatsApp</label>
+            <input type="tel" id="c-whatsapp" name="whatsapp" placeholder="(00) 00000-0000" required>
+          </div>
+          <div class="form-group">
+            <label for="c-cep">CEP</label>
+            <input type="text" id="c-cep" name="cep" placeholder="00000-000" maxlength="9" class="cep-input" required>
+            <small class="cep-status" style="margin-top:4px; font-size:0.8rem;"></small>
+          </div>
+          <div class="form-group">
+            <label for="c-rua">Rua</label>
+            <input type="text" id="c-rua" name="rua" class="cep-rua" required>
+          </div>
+          <div class="form-group">
+            <label for="c-numero">Número</label>
+            <input type="text" id="c-numero" name="numero" class="cep-numero" placeholder="Nº" required>
+          </div>
+          <div class="form-group">
+            <label for="c-complemento">Complemento <small style="font-weight:400;">(opcional)</small></label>
+            <input type="text" id="c-complemento" name="complemento" placeholder="Apto, bloco...">
+          </div>
+          <div class="form-group">
+            <label for="c-bairro">Bairro</label>
+            <input type="text" id="c-bairro" name="bairro" class="cep-bairro" required>
+          </div>
+          <div class="form-group">
+            <label for="c-cidade">Cidade</label>
+            <input type="text" id="c-cidade" name="cidade" class="cep-cidade" required>
+          </div>
+          <div class="form-group">
+            <label for="c-estado">Estado</label>
+            <input type="text" id="c-estado" name="estado" class="cep-estado" required>
+          </div>
+          <div class="form-group">
+            <label for="c-idade">Idade</label>
+            <input type="number" id="c-idade" name="idade" min="18" max="80" required>
+          </div>
+          <div class="form-group">
+            <label for="c-profissao">Profissão atual</label>
+            <input type="text" id="c-profissao" name="profissao" required>
+          </div>
+          <div class="form-group full-width">
+            <label>Você frequenta alguma igreja ou tem alguma religião? <small style="font-weight:400;">(marque todas as que se aplicam)</small></label>
+            <div class="checkbox-group">
+              <label class="checkbox-label"><input type="checkbox" name="religiao" value="Não tenho religião"> Não tenho religião</label>
+              <label class="checkbox-label"><input type="checkbox" name="religiao" value="Católica"> Católica</label>
+              <label class="checkbox-label"><input type="checkbox" name="religiao" value="Evangélica / Protestante"> Evangélica / Protestante</label>
+              <label class="checkbox-label"><input type="checkbox" name="religiao" value="Adventista"> Adventista</label>
+              <label class="checkbox-label"><input type="checkbox" name="religiao" value="Pentecostal"> Pentecostal</label>
+              <label class="checkbox-label"><input type="checkbox" name="religiao" value="Espírita"> Espírita</label>
+              <label class="checkbox-label"><input type="checkbox" name="religiao" value="Budista"> Budista</label>
+              <label class="checkbox-label"><input type="checkbox" name="religiao" value="Judaica"> Judaica</label>
+              <label class="checkbox-label"><input type="checkbox" name="religiao" value="Ateísta"> Ateísta</label>
+              <label class="checkbox-label"><input type="checkbox" name="religiao" value="Umbanda, candomblé ou outras religiões afro-brasileiras"> Umbanda, candomblé ou outras religiões afro-brasileiras</label>
+            </div>
+          </div>
+        </div>
+
+        <h4 style="margin-bottom:4px;">Formação e experiência</h4>
+        <div class="form-grid" style="margin-bottom:32px;">
+          <div class="form-group full-width">
+            <label for="c-trilha">Sua trilha de formação</label>
+            <select id="c-trilha" name="trilha" required>
+              <option value="">Selecione</option>
+              <option value="saude-graduacao">Graduação na área da saúde</option>
+              <option value="saude-tecnico">Curso técnico na área da saúde</option>
+              <option value="outra-graduacao">Graduação em outra área (administração, pedagogia, comunicação, etc.)</option>
+              <option value="sem-formacao">Não tenho nível superior nem técnico</option>
+            </select>
+            <small style="margin-top:4px; font-size:0.8rem; color:var(--graphite-light);">Aceitamos as três primeiras trilhas. Sem nível superior ou técnico, infelizmente o candidato não é elegível neste momento.</small>
+          </div>
+          <div class="form-group full-width">
+            <label for="c-formacao">Qual o curso/graduação?</label>
+            <input type="text" id="c-formacao" name="formacao" placeholder="Ex.: Enfermagem, Administração, Pedagogia..." required>
+          </div>
+          <div class="form-group full-width">
+            <label for="c-vendas">Experiência com vendas ou colportagem</label>
+            <select id="c-vendas" name="experiencia_vendas" required>
+              <option value="">Selecione</option>
+              <option value="sim-profissional">Sim, profissionalmente</option>
+              <option value="sim-informal">Sim, informalmente</option>
+              <option value="nao-interesse">Não, mas tenho interesse</option>
+              <option value="nao">Não</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label for="c-vendas-desc">Se sim, descreva brevemente</label>
+            <input type="text" id="c-vendas-desc" name="experiencia_descricao">
+          </div>
+        </div>
+
+        <h4 style="margin-bottom:4px;">Disponibilidade e motivação</h4>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="c-tempo">Disponibilidade de tempo</label>
+            <select id="c-tempo" name="disponibilidade" required>
+              <option value="">Selecione</option>
+              <option value="integral">Tempo integral</option>
+              <option value="meio-periodo">Meio período (~20h/semana)</option>
+              <option value="renda-extra">Renda extra (~10h/semana)</option>
+              <option value="avaliando">Ainda estou avaliando</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="c-mev">Você conhece a Medicina do Estilo de Vida?</label>
+            <select id="c-mev" name="medicina_estilo_vida" required>
+              <option value="">Selecione</option>
+              <option value="pratico">Sim, pratico</option>
+              <option value="conheco">Conheço mas não pratico</option>
+              <option value="nao-conheco">Não conheço</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label for="c-como">Como conheceu a SOW Books?</label>
+            <select id="c-como" name="como_conheceu" required>
+              <option value="">Selecione</option>
+              <option value="instagram">Instagram</option>
+              <option value="indicacao">Indicação de alguém</option>
+              <option value="evento">Evento ou palestra</option>
+              <option value="google">Google</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label for="c-motivacao">Por que quer ser Consultor Certificado da SOW? (opcional)</label>
+            <textarea id="c-motivacao" name="motivacao" placeholder="Conte um pouco sobre sua motivação..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-submit">
+          <button type="submit" class="btn btn-primary">Enviar minha candidatura</button>
+          <span class="status" role="status"></span>
+        </div>
+        <p class="form-note">Ao enviar, você concorda com nossa <a href="../privacidade/" style="color:var(--green); text-decoration:underline;">Política de Privacidade</a>. Analisaremos seu perfil e retornaremos em até 48 horas.</p>
+      </form>
+    </div>
+
+  </section>
+
+  <!-- Console de integração -->
+  <aside class="console-wrap" aria-label="Console de integração">
+    <div class="console">
+      <div class="console-topo">
+        <h3>Console de integração</h3>
+        <button type="button" id="limparLog">limpar</button>
+      </div>
+      <div class="console-log" id="log">
+        <p class="vazio">// Os payloads enviados e as respostas do ERP aparecem aqui.</p>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<script>
+  /* =====================================================
+     Console de integração
+     ===================================================== */
+  const log = document.getElementById('log');
+  const badge = document.getElementById('badgeModo');
+
+  function hora() { return new Date().toLocaleTimeString('pt-BR'); }
+
+  function registrar(tag, classe, objeto) {
+    const vazio = log.querySelector('.vazio');
+    if (vazio) vazio.remove();
+    const item = document.createElement('div');
+    item.className = 'log-item';
+    item.innerHTML =
+      '<span class="hora">[' + hora() + ']</span> ' +
+      '<span class="tag ' + classe + '">' + tag + '</span>' +
+      '<pre>' + JSON.stringify(objeto, null, 2)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>';
+    log.prepend(item);
+  }
+
+  document.getElementById('limparLog').addEventListener('click', () => {
+    log.innerHTML = '<p class="vazio">// Os payloads enviados e as respostas do ERP aparecem aqui.</p>';
+  });
+
+  function atualizarBadge(modo) {
+    if (modo === 'simulacao') {
+      badge.textContent = 'modo simulação — ERP_API_URL não configurada';
+      badge.className = 'badge-modo simulacao';
+    } else if (modo === 'real') {
+      badge.textContent = 'modo real — integrado ao ERP';
+      badge.className = 'badge-modo real';
+    }
+  }
+
+  /* =====================================================
+     Autopreenchimento de endereço via CEP (ViaCEP)
+     ===================================================== */
+  document.querySelectorAll('.cep-input').forEach((campoCep) => {
+    campoCep.addEventListener('input', () => {
+      // máscara simples 00000-000
+      let v = campoCep.value.replace(/\D/g, '').slice(0, 8);
+      if (v.length > 5) v = v.slice(0, 5) + '-' + v.slice(5);
+      campoCep.value = v;
+    });
+
+    campoCep.addEventListener('blur', async () => {
+      const grupoPai = campoCep.closest('form');
+      const statusCep = campoCep.parentElement.querySelector('.cep-status');
+      const cep = campoCep.value.replace(/\D/g, '');
+
+      if (cep.length !== 8) return;
+
+      statusCep.textContent = 'Buscando endereço…';
+      statusCep.className = 'cep-status';
+
+      try {
+        const resp = await fetch('https://viacep.com.br/ws/' + cep + '/json/');
+        const dados = await resp.json();
+        if (dados.erro) {
+          statusCep.textContent = 'CEP não encontrado. Preencha o endereço manualmente.';
+          statusCep.className = 'cep-status erro';
+          return;
+        }
+        const preencher = (seletor, valor) => {
+          const campo = grupoPai.querySelector(seletor);
+          if (campo && valor) campo.value = valor;
+        };
+        preencher('.cep-rua', dados.logradouro);
+        preencher('.cep-bairro', dados.bairro);
+        preencher('.cep-cidade', dados.localidade);
+        preencher('.cep-estado', dados.uf);
+        statusCep.textContent = 'Endereço preenchido ✓';
+        statusCep.className = 'cep-status ok';
+        const numero = grupoPai.querySelector('.cep-numero');
+        if (numero) numero.focus();
+      } catch {
+        statusCep.textContent = 'Falha ao consultar o CEP. Preencha manualmente.';
+        statusCep.className = 'cep-status erro';
+      }
+    });
+  });
+
+  /* =====================================================
+     Envio dos formulários -> integração ERP
+     ===================================================== */
+  document.querySelectorAll('form[data-tipo]').forEach((form) => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const botao = form.querySelector('button[type="submit"]');
+      const status = form.querySelector('.status');
+      const tipo = form.dataset.tipo;
+
+      // Honeypot anti-spam: se preenchido, ignora silenciosamente
+      const honey = form.querySelector('input[name="_honey"]');
+      if (honey && honey.value) return;
+
+      // Monta o objeto de dados (checkboxes com mesmo name viram array)
+      const dados = {};
+      new FormData(form).forEach((valor, chave) => {
+        if (chave.startsWith('_')) return; // ignora campos técnicos (_subject, _template, _honey)
+        if (chave in dados) {
+          if (!Array.isArray(dados[chave])) dados[chave] = [dados[chave]];
+          dados[chave].push(valor);
+        } else {
+          dados[chave] = valor;
+        }
+      });
+
+      const corpo = { tipo, dados };
+
+      botao.disabled = true;
+      status.textContent = 'Enviando…';
+      status.className = 'status';
+      registrar('→ requisição (' + tipo + ')', 'req', corpo);
+
+      try {
+        const resp = await fetch('/api/integracao', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(corpo),
+        });
+        const json = await resp.json();
+
+        if (json.modo) atualizarBadge(json.modo);
+
+        if (resp.ok && json.ok) {
+          status.textContent = json.modo === 'simulacao'
+            ? 'Validado (simulação)'
+            : 'Enviado ao ERP ✓';
+          status.className = 'status ok';
+          registrar('← resposta ' + resp.status, 'res-ok', json);
+          form.reset();
+          form.querySelectorAll('.cep-status').forEach((s) => { s.textContent = ''; });
+        } else {
+          status.textContent = json.erro || 'Falha no envio.';
+          status.className = 'status erro';
+          registrar('← resposta ' + resp.status, 'res-erro', json);
+        }
+      } catch (err) {
+        status.textContent = 'Erro de rede: ' + err.message;
+        status.className = 'status erro';
+        registrar('← erro de rede', 'res-erro', { erro: err.message });
+      } finally {
+        botao.disabled = false;
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
