@@ -1,16 +1,20 @@
 // api/integracao.js
 // Função serverless (Vercel) que recebe os envios dos formulários da SOW Books
-// e encaminha cada lead para o ERP.
+// e encaminha cada lead para o ERP Ágil.
 //
-// Autenticação: o ERP aceita DOIS headers possíveis —
-//   X-Form-Token  -> token por formulário (Gestão Comercial → Formulários)
-//   X-API-Token   -> token por empresa (legado)
-// Para não depender de adivinhar qual é, enviamos o mesmo token nos dois
-// headers. O ERP usa o que reconhecer e ignora o outro.
+// Cada formulário no ERP tem seu PRÓPRIO token (X-Form-Token), e é esse token
+// que roteia o lead para o funil certo. Por isso usamos um token por tipo.
+//
+// Endpoint (o mesmo para todos os formulários):
+//   POST https://app.erpagil.com/api/public/leads
+//   Header: X-Form-Token: {token do formulário}
+//   Body: { name (obrigatório), email, phone, ...demais campos }
 //
 // Variáveis de ambiente (Vercel → Settings → Environment Variables):
-//   ERP_API_URL    -> ex: https://SEUDOMINIO.com/api/public/leads
-//   ERP_API_TOKEN  -> o token gerado no ERP (de formulário OU de empresa)
+//   ERP_API_URL          -> https://app.erpagil.com/api/public/leads
+//   ERP_TOKEN_VISITA     -> token do formulário "Solicitação de visita"
+//   ERP_TOKEN_CORPORATIVO-> token do formulário corporativo
+//   ERP_TOKEN_CONSULTOR  -> token do formulário de candidatura de consultor
 //
 // Sem ERP_API_URL, roda em MODO SIMULAÇÃO (valida sem encaminhar).
 
@@ -43,22 +47,22 @@ export default async function handler(req, res) {
     return res.status(400).json({ ok: false, erro: 'Nome do lead ausente (o ERP exige "name").' });
   }
 
-  const sourcePorTipo = {
-    visita: 'site-solicitacao-visita',
-    corporativo: 'site-corporativo',
-    consultor: 'site-candidatura-consultor',
-  };
-
   const leadERP = {
     name: nome,
     email: dados.email || '',
     phone: dados.whatsapp || '',
-    source: sourcePorTipo[tipo],
     ...dados,
   };
 
+  // ---- Seleciona o token do formulário conforme o tipo ----
+  const tokenPorTipo = {
+    visita: process.env.ERP_TOKEN_VISITA,
+    corporativo: process.env.ERP_TOKEN_CORPORATIVO,
+    consultor: process.env.ERP_TOKEN_CONSULTOR,
+  };
+  const formToken = tokenPorTipo[tipo];
+
   const erpUrl = process.env.ERP_API_URL;
-  const erpToken = process.env.ERP_API_TOKEN;
 
   // MODO SIMULAÇÃO
   if (!erpUrl) {
@@ -67,28 +71,28 @@ export default async function handler(req, res) {
       modo: 'simulacao',
       mensagem:
         'ERP_API_URL não configurada. Lead validado e montado, mas não encaminhado. ' +
-        'Configure ERP_API_URL e ERP_API_TOKEN no Vercel para ativar a integração real.',
+        'Configure ERP_API_URL e os tokens no Vercel para ativar a integração real.',
       lead: leadERP,
     });
   }
 
-  if (!erpToken) {
+  if (!formToken) {
     return res.status(200).json({
       ok: false,
       modo: 'real',
-      erro: 'ERP_API_TOKEN não configurada no Vercel. Adicione a variável e faça Redeploy.',
+      erro: `Token do formulário "${tipo}" não configurado no Vercel ` +
+            `(variável ERP_TOKEN_${tipo.toUpperCase()}). Adicione-a e faça Redeploy.`,
       lead: leadERP,
     });
   }
 
-  // MODO REAL — envia o token nos dois headers aceitos pelo ERP
+  // MODO REAL
   try {
     const resposta = await fetch(erpUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Form-Token': erpToken,
-        'X-API-Token': erpToken,
+        'X-Form-Token': formToken,
       },
       body: JSON.stringify(leadERP),
     });
